@@ -5,6 +5,7 @@ const bodyParser = require('body-parser')
 
 // Routes modules
 const usersRoutes = require('./routes/users.route');
+const authRoutes = require('./routes/auth.route');
 
 // Variables
 const port = process.env.SERVER_PORT || 3000;
@@ -20,6 +21,7 @@ app.use(bodyParser.json());
 
 // Routes
 app.use('/users', usersRoutes);
+app.use('/auth', authRoutes);
 
 // Run server
 app.listen(port, () => {

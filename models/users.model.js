@@ -20,6 +20,11 @@ let UserSchema = new Schema({
         required: true
     },
 
+    isAdmin: {
+        type: Boolean,
+        required: false
+    },
+
     _createdAt: { 
         type: Date,
         required: true,

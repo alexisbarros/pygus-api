@@ -13,6 +13,7 @@ exports.create = async (req, res) => {
 
     try {
         
+        // Connect to database
         await mongoose.connect(process.env.DB_CONNECTION_STRING, { 
             useNewUrlParser: true,
             useUnifiedTopology: true
@@ -21,7 +22,8 @@ exports.create = async (req, res) => {
         // Create user in database
         let user = await User.create({
             email: req.body.email,
-            password: req.body.password
+            password: req.body.password,
+            isAdmin: req.body.isAdmin || false
         });
     
         // Disconnect to database
@@ -30,11 +32,12 @@ exports.create = async (req, res) => {
         // Create user data to return
         let userToFront = {
             _id: user._id,
-            email: user.email
+            email: user.email,
+            isAdmin: user.isAdmin
         };
         
         console.info('User created successfuly');
-        res.send({
+        return({
             data: userToFront,
             message: 'User created successfuly',
             code: 200
@@ -42,8 +45,11 @@ exports.create = async (req, res) => {
 
     } catch(err) {
 
+        // Disconnect to database
+        await mongoose.disconnect();
+
         console.error(err.message);
-        res.send({
+        return({
             data: {},
             message: err.message,
             code: 400
@@ -77,14 +83,15 @@ exports.readOne = async (req, res) => {
         // Create user data to return
         let userToFront = {
             _id: user._id,
-            email: user.email
+            email: user.email,
+            isAdmin: user.isAdmin
         };
         
         // Disconnect to database
         await mongoose.disconnect();
         
         console.info('User returned successfully');
-        res.send({
+        return({
             data: userToFront,
             message: 'User returned successfully',
             code: 200
@@ -92,8 +99,11 @@ exports.readOne = async (req, res) => {
 
     } catch(err) {
 
+        // Disconnect to database
+        await mongoose.disconnect();
+
         console.error(err.message);
-        res.send({
+        return({
             data: {},
             message: err.message,
             code: 400
@@ -128,7 +138,8 @@ exports.readAll = async (req, res) => {
         usersToFront = usersToFront.map(user => {
             return {
                 _id: user._id,
-                email: user.email
+                email: user.email,
+                isAdmin: user.isAdmin
             };
         });
         
@@ -136,7 +147,7 @@ exports.readAll = async (req, res) => {
         await mongoose.disconnect();
         
         console.info('Users returned successfully');
-        res.send({
+        return({
             data: usersToFront,
             message: 'Users returned successfully',
             code: 200
@@ -144,8 +155,11 @@ exports.readAll = async (req, res) => {
 
     } catch(err) {
 
+        // Disconnect to database
+        await mongoose.disconnect();
+
         console.error(err.message);
-        res.send({
+        return({
             data: [],
             message: err.message,
             code: 400
@@ -179,11 +193,12 @@ exports.update = async (req, res) => {
         // Create user data to return
         let userToFront = {
             _id: user._id,
-            email: user.email
+            email: user.email,
+            isAdmin: user.isAdmin
         };
         
         console.info('User updated successfuly');
-        res.send({
+        return({
             data: userToFront,
             message: 'User updated successfuly',
             code: 200
@@ -191,8 +206,11 @@ exports.update = async (req, res) => {
 
     } catch(err) {
 
+        // Disconnect to database
+        await mongoose.disconnect();
+
         console.error(err.message);
-        res.send({
+        return({
             data: [],
             message: err.message,
             code: 400
@@ -224,7 +242,7 @@ exports.delete = async (req, res) => {
         await mongoose.disconnect();
     
         console.info('User deleted successfuly');
-        res.send({
+        return({
             data: {},
             message: 'User deleted successfuly',
             code: 200
@@ -232,8 +250,11 @@ exports.delete = async (req, res) => {
         
     } catch(err) {
 
+        // Disconnect to database
+        await mongoose.disconnect();
+        
         console.error(err.message);
-        res.send({
+        return({
             data: [],
             message: err.message,
             code: 400
