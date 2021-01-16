@@ -71,12 +71,21 @@ exports.readOne = async (req, res) => {
         // Get user by id
         let user = await User.findById(req.params.id);
         
+        // Check if user was removed
+        if(user._deletedAt) throw { message: 'User removed' };
+
+        // Create user data to return
+        let userToFront = {
+            _id: user._id,
+            email: user.email
+        };
+        
         // Disconnect to database
         await mongoose.disconnect();
         
         console.info('User returned successfully');
         res.send({
-            data: user,
+            data: userToFront,
             message: 'User returned successfully',
             code: 200
         });
@@ -111,13 +120,24 @@ exports.readAll = async (req, res) => {
         
         // Get all users
         let users = await User.find({});
+
+        // Filter user tha wasnt removed
+        let usersToFront = users.filter(user => !user._deletedAt);
+
+        // Create user data to return
+        usersToFront = usersToFront.map(user => {
+            return {
+                _id: user._id,
+                email: user.email
+            };
+        });
         
         // Disconnect to database
         await mongoose.disconnect();
         
         console.info('Users returned successfully');
         res.send({
-            data: users,
+            data: usersToFront,
             message: 'Users returned successfully',
             code: 200
         });
@@ -198,7 +218,7 @@ exports.delete = async (req, res) => {
         });
         
         // Delete user by id
-        await User.deleteOne({ "_id" : req.params.id });
+        await User.findByIdAndUpdate(req.params.id, { _deletedAt: Date.now() });
     
         // Disconnect to database
         await mongoose.disconnect();
