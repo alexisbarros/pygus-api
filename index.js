@@ -6,6 +6,7 @@ const bodyParser = require('body-parser')
 // Routes modules
 const usersRoutes = require('./routes/users.route');
 const authRoutes = require('./routes/auth.route');
+const tasksRoutes = require('./routes/tasks.route');
 
 // Variables
 const port = process.env.SERVER_PORT || 3000;
@@ -22,6 +23,10 @@ app.use(bodyParser.json());
 // Routes
 app.use('/users', usersRoutes);
 app.use('/auth', authRoutes);
+app.use('/tasks', tasksRoutes);
+
+// Statics routes
+app.use('/public/tasks_images', express.static('./public/tasks_images'));
 
 // Run server
 app.listen(port, () => {
