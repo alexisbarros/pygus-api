@@ -54,7 +54,7 @@ exports.create = async (req, res) => {
         let task = await Task.create({
             name: req.body.name,
             image: req.file.path,
-            syllables: req.body.syllables
+            syllables: JSON.parse(req.body.syllables)
         });
     
         // Disconnect to database
@@ -63,6 +63,7 @@ exports.create = async (req, res) => {
         // Create task data to return
         let taskToFront = {
             _id: task._id,
+            _createdAt: task._createdAt,
             name: task.name,
             image: task.image,
             syllables: task.syllables
@@ -115,6 +116,7 @@ exports.readOne = async (req, res) => {
         // Create task data to return
         let taskToFront = {
             _id: task._id,
+            _createdAt: task._createdAt,
             name: task.name,
             image: task.image,
             syllables: task.syllables
@@ -171,6 +173,7 @@ exports.readAll = async (req, res) => {
         tasksToFront = tasksToFront.map(task => {
             return {
                 _id: task._id,
+                _createdAt: task._createdAt,
                 name: task.name,
                 images: task.images,
                 syllables: task.syllables
@@ -227,6 +230,7 @@ exports.update = async (req, res) => {
         // Create task data to return
         let taskToFront = {
             _id: task._id,
+            _createdAt: task._createdAt,
             name: task.name,
             image: task.imagem,
             syllables: task.syllables
