@@ -33,7 +33,7 @@ const storage_audio = multer.diskStorage({
         cb(null, file.originalname);
     }
 });
-exports.uploadAudio = multer({ storage: storage_audio }).single('audios');
+exports.uploadAudio = multer({ storage: storage_audio }).array('audios');
 
 /**
  * Register task in db.
