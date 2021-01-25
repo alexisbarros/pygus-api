@@ -1,7 +1,8 @@
 // Modules
 const express = require('express');
 require('dotenv/config');
-const bodyParser = require('body-parser')
+const bodyParser = require('body-parser');
+const cors = require('cors');
 
 // Routes modules
 const usersRoutes = require('./routes/users.route');
@@ -16,6 +17,9 @@ const port = process.env.PORT || 3000;
 
 // Start express app
 const app = express();
+
+// Enable cors
+app.use(cors());
 
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: false }));
