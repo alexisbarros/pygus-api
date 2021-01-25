@@ -12,7 +12,7 @@ const tasksRoutes = require('./routes/tasks.route');
 const authMiddleware = require('./middleware/auth.middleware');
 
 // Variables
-const port = process.env.SERVER_PORT || 3000;
+const port = process.env.PORT || 3000;
 
 // Start express app
 const app = express();
