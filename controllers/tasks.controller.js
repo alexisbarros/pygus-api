@@ -12,7 +12,7 @@ const Task = require('../models/tasks.model');
 const storage = multer.diskStorage({
 
     destination: function (req, file, cb) {
-        cb(null, './public/tasks_images');
+        cb(null, __dirname + '/public/tasks_images');
     },
 
     filename: function (req, file, cb) {
@@ -26,7 +26,7 @@ exports.uploadImg = multer({ storage: storage }).single('image');
  */
 const storage_audio = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, `./public/tasks_audios`);
+        cb(null, __dirname + '/public/tasks_audios');
     },
 
     filename: function (req, file, cb) {
