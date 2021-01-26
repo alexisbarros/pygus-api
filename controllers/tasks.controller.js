@@ -49,11 +49,18 @@ exports.create = async (req, res) => {
             useNewUrlParser: true,
             useUnifiedTopology: true
         });
+        
+        // Create image buffer to put in mongod
+        let image = {
+            data: fs.readFileSync(req.file.path),
+            type: req.file.mimetype
+        }
 
         // Create task in database
         let task = await Task.create({
             name: req.body.name,
-            image: req.file.path,
+            image: image,
+            imageType: req.file.mimetype,
             syllables: JSON.parse(req.body.syllables)
         });
     
@@ -66,7 +73,9 @@ exports.create = async (req, res) => {
             _createdAt: task._createdAt,
             name: task.name,
             image: task.image,
-            syllables: task.syllables
+            imageType: task.imageType,
+            syllables: task.syllables,
+            // audios: task.audios
         };
         
         console.info('Task created successfuly');
@@ -119,7 +128,9 @@ exports.readOne = async (req, res) => {
             _createdAt: task._createdAt,
             name: task.name,
             image: task.image,
-            syllables: task.syllables
+            imageType: task.imageType,
+            syllables: task.syllables,
+            audios: task.audios
         };
         
         // Disconnect to database
@@ -175,8 +186,10 @@ exports.readAll = async (req, res) => {
                 _id: task._id,
                 _createdAt: task._createdAt,
                 name: task.name,
-                images: task.images,
-                syllables: task.syllables
+                image: task.image,
+                imageType: task.imageType,
+                syllables: task.syllables,
+                audios: task.audios
             };
         });
         
@@ -220,9 +233,23 @@ exports.update = async (req, res) => {
             useNewUrlParser: true,
             useUnifiedTopology: true
         });
+
+        let formUpdated = { ...req.body };
+
+        // Get audios
+        if(req.files){
+            // Create audios buffer to put in mongod
+            let audios = req.files.map(el => {
+                return({
+                    data: fs.readFileSync(el.path),
+                    type: el.mimetype
+                });
+            });
+            formUpdated['audios'] = audios;
+        }
     
         // Update task data
-        let task = await Task.findByIdAndUpdate(req.params.id, { ...req.body });
+        let task = await Task.findByIdAndUpdate(req.params.id, formUpdated);
     
         // Disconnect to database
         await mongoose.disconnect();
@@ -233,7 +260,9 @@ exports.update = async (req, res) => {
             _createdAt: task._createdAt,
             name: task.name,
             image: task.imagem,
-            syllables: task.syllables
+            imageType: task.imageType,
+            syllables: task.syllables,
+            audios: task.audios
         };
         
         console.info('Task updated successfuly');

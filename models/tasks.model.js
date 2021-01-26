@@ -12,8 +12,13 @@ const TaskSchema = new Schema({
     },
     
     image: {
+        data: Buffer,
+        contentType: String,
+    },
+
+    imageType: {
         type: String,
-        required: true
+        required: false
     },
 
     syllables: {
@@ -22,8 +27,8 @@ const TaskSchema = new Schema({
     },
 
     audios: {
-        type: String,
-        required: false
+        data: Buffer,
+        contentType: Array,
     },
 
     _createdAt: { 
