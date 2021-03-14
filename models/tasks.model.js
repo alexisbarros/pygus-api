@@ -3,6 +3,21 @@ const mongoose = require('mongoose');
 
 const Schema = mongoose.Schema;
 
+const SyllableSchema = new Schema({
+
+    syllable: {
+        type: String,
+        required: true,
+    },
+
+    isPhoneme: {
+        type: Boolean,
+        required: false,
+        default: false,
+    },
+
+});
+
 // Schema
 const TaskSchema = new Schema({
 
@@ -10,7 +25,7 @@ const TaskSchema = new Schema({
         type: String,
         required: true,
     },
-    
+
     image: {
         data: Buffer,
         contentType: String,
@@ -21,31 +36,30 @@ const TaskSchema = new Schema({
         required: false
     },
 
-    syllables: {
-        type: Array,
-        required: true
-    },
+    syllables: [
+        SyllableSchema
+    ],
 
     audios: {
         data: Buffer,
         contentType: Array,
     },
 
-    _createdAt: { 
+    _createdAt: {
         type: Date,
         required: true,
         default: () => {
-            if(!this._createdAt) {            
+            if (!this._createdAt) {
                 return Date.now();
             }
         },
     },
 
-    _updatedAt: { 
+    _updatedAt: {
         type: Date,
         required: true,
         default: () => {
-            if(!this._updatedAt) {            
+            if (!this._updatedAt) {
                 return Date.now();
             }
         },
