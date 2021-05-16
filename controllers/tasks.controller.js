@@ -43,13 +43,13 @@ exports.uploadAudio = multer({ storage: storage_audio }).array('audios');
 exports.create = async (req, res) => {
 
     try {
-        
+
         // Connect to database
-        await mongoose.connect(process.env.DB_CONNECTION_STRING, { 
+        await mongoose.connect(process.env.DB_CONNECTION_STRING, {
             useNewUrlParser: true,
             useUnifiedTopology: true
         });
-        
+
         // Create image buffer to put in mongod
         let image = {
             data: fs.readFileSync(req.file.path),
@@ -63,7 +63,7 @@ exports.create = async (req, res) => {
             imageType: req.file.mimetype,
             syllables: JSON.parse(req.body.syllables)
         });
-    
+
         // Disconnect to database
         await mongoose.disconnect();
 
@@ -77,7 +77,7 @@ exports.create = async (req, res) => {
             syllables: task.syllables,
             // audios: task.audios
         };
-        
+
         console.info('Task created successfuly');
         res.send({
             data: taskToFront,
@@ -85,7 +85,7 @@ exports.create = async (req, res) => {
             code: 200
         });
 
-    } catch(err) {
+    } catch (err) {
 
         // Disconnect to database
         await mongoose.disconnect();
@@ -111,16 +111,16 @@ exports.readOne = async (req, res) => {
     try {
 
         // Connect to database
-        await mongoose.connect(process.env.DB_CONNECTION_STRING, { 
+        await mongoose.connect(process.env.DB_CONNECTION_STRING, {
             useNewUrlParser: true,
             useUnifiedTopology: true
         });
-        
+
         // Get task by id
         let task = await Task.findById(req.params.id);
-        
+
         // Check if task was removed
-        if(task._deletedAt) throw { message: 'Task removed' };
+        if (task._deletedAt) throw { message: 'Task removed' };
 
         // Create task data to return
         let taskToFront = {
@@ -132,10 +132,10 @@ exports.readOne = async (req, res) => {
             syllables: task.syllables,
             audios: task.audios
         };
-        
+
         // Disconnect to database
         await mongoose.disconnect();
-        
+
         console.info('Task returned successfully');
         res.send({
             data: taskToFront,
@@ -143,7 +143,7 @@ exports.readOne = async (req, res) => {
             code: 200
         });
 
-    } catch(err) {
+    } catch (err) {
 
         // Disconnect to database
         await mongoose.disconnect();
@@ -167,13 +167,13 @@ exports.readOne = async (req, res) => {
 exports.readAll = async (req, res) => {
 
     try {
-        
+
         // Connect to database
-        await mongoose.connect(process.env.DB_CONNECTION_STRING, { 
+        await mongoose.connect(process.env.DB_CONNECTION_STRING, {
             useNewUrlParser: true,
             useUnifiedTopology: true
         });
-        
+
         // Get all tasks
         let tasks = await Task.find({});
 
@@ -192,10 +192,10 @@ exports.readAll = async (req, res) => {
                 audios: task.audios
             };
         });
-        
+
         // Disconnect to database
         await mongoose.disconnect();
-        
+
         console.info('Tasks returned successfully');
         res.send({
             data: tasksToFront,
@@ -203,7 +203,7 @@ exports.readAll = async (req, res) => {
             code: 200
         });
 
-    } catch(err) {
+    } catch (err) {
 
         // Disconnect to database
         await mongoose.disconnect();
@@ -229,28 +229,26 @@ exports.update = async (req, res) => {
     try {
 
         // Connect to database
-        await mongoose.connect(process.env.DB_CONNECTION_STRING, { 
+        await mongoose.connect(process.env.DB_CONNECTION_STRING, {
             useNewUrlParser: true,
             useUnifiedTopology: true
         });
 
         let formUpdated = { ...req.body };
 
-        // Get audios
-        if(req.files){
-            // Create audios buffer to put in mongod
-            let audios = req.files.map(el => {
-                return({
-                    data: fs.readFileSync(el.path),
-                    type: el.mimetype
-                });
-            });
-            formUpdated['audios'] = audios;
+        // Create image buffer to put in mongod
+        if (req.file) {
+            let image = {
+                data: fs.readFileSync(req.file.path),
+                type: req.file.mimetype
+            }
+            formUpdated['image'] = image;
         }
-    
+        formUpdated['syllables'] = JSON.parse(formUpdated.syllables)
+
         // Update task data
         let task = await Task.findByIdAndUpdate(req.params.id, formUpdated);
-    
+
         // Disconnect to database
         await mongoose.disconnect();
 
@@ -264,7 +262,7 @@ exports.update = async (req, res) => {
             syllables: task.syllables,
             audios: task.audios
         };
-        
+
         console.info('Task updated successfuly');
         res.send({
             data: taskToFront,
@@ -272,7 +270,77 @@ exports.update = async (req, res) => {
             code: 200
         });
 
-    } catch(err) {
+    } catch (err) {
+
+        // Disconnect to database
+        await mongoose.disconnect();
+
+        console.error(err.message);
+        res.send({
+            data: [],
+            message: err.message,
+            code: 400
+        });
+
+    }
+
+};
+
+/**
+ * Update a task.
+ * @param {*} req 
+ * @param {*} res 
+ */
+exports.updateAudio = async (req, res) => {
+
+    try {
+
+        // Connect to database
+        await mongoose.connect(process.env.DB_CONNECTION_STRING, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true
+        });
+
+        let formUpdated = { ...req.body };
+
+        // Get audios
+        if (req.files) {
+            // Create audios buffer to put in mongod
+            let audios = [];
+            for (audio of req.files) {
+                audios.push({
+                    data: fs.readFileSync(audio.path),
+                    type: audio.mimetype
+                });
+            };
+            formUpdated['audios'] = audios;
+        }
+
+        // Update task data
+        let task = await Task.findByIdAndUpdate(req.params.id, formUpdated);
+
+        // Disconnect to database
+        await mongoose.disconnect();
+
+        // Create task data to return
+        let taskToFront = {
+            _id: task._id,
+            _createdAt: task._createdAt,
+            name: task.name,
+            image: task.imagem,
+            imageType: task.imageType,
+            syllables: task.syllables,
+            audios: task.audios
+        };
+
+        console.info('Task updated successfuly');
+        res.send({
+            data: taskToFront,
+            message: 'Task updated successfuly',
+            code: 200
+        });
+
+    } catch (err) {
 
         // Disconnect to database
         await mongoose.disconnect();
@@ -298,29 +366,29 @@ exports.delete = async (req, res) => {
     try {
 
         // Connect to database
-        await mongoose.connect(process.env.DB_CONNECTION_STRING, { 
+        await mongoose.connect(process.env.DB_CONNECTION_STRING, {
             useNewUrlParser: true,
             useUnifiedTopology: true
         });
-        
+
         // Delete task by id
         await Task.findByIdAndUpdate(req.params.id, { _deletedAt: Date.now() });
-    
+
         // Disconnect to database
         await mongoose.disconnect();
-    
+
         console.info('Task deleted successfuly');
         res.send({
             data: {},
             message: 'Task deleted successfuly',
             code: 200
         });
-        
-    } catch(err) {
+
+    } catch (err) {
 
         // Disconnect to database
         await mongoose.disconnect();
-        
+
         console.error(err.message);
         res.send({
             data: [],
