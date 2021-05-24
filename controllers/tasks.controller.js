@@ -175,7 +175,7 @@ exports.readAll = async (req, res) => {
         });
 
         // Get all tasks
-        let tasks = await Task.find({});
+        let tasks = await Task.find({}).select("-audios -image");
 
         // Filter task tha wasnt removed
         let tasksToFront = tasks.filter(task => !task._deletedAt);
@@ -186,10 +186,10 @@ exports.readAll = async (req, res) => {
                 _id: task._id,
                 _createdAt: task._createdAt,
                 name: task.name,
-                image: task.image,
+                // audios: task.audios,
+                // image: task.image,
                 imageType: task.imageType,
                 syllables: task.syllables,
-                audios: task.audios
             };
         });
 
