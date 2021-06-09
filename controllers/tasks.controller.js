@@ -256,13 +256,13 @@ exports.update = async (req, res) => {
         let formUpdated = { ...req.body };
 
         // Create image buffer to put in mongod
-        if (req.file) {
-            let image = {
-                data: fs.readFileSync(req.file.path),
-                type: req.file.mimetype
-            }
-            formUpdated['image'] = image;
-        }
+        // if (req.file) {
+        //     let image = {
+        //         data: fs.readFileSync(req.file.path),
+        //         type: req.file.mimetype
+        //     }
+        //     formUpdated['image'] = image;
+        // }
         formUpdated['syllables'] = JSON.parse(formUpdated.syllables);
         formUpdated['phoneme'] = JSON.parse(formUpdated.phoneme);
 
