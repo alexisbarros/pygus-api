@@ -264,7 +264,7 @@ exports.update = async (req, res) => {
         //     formUpdated['image'] = image;
         // }
         formUpdated['syllables'] = JSON.parse(formUpdated.syllables);
-        formUpdated['phoneme'] = JSON.parse(formUpdated.phoneme);
+        formUpdated['phoneme'] = formUpdated.phoneme;
 
         // Update task data
         let task = await Task.findByIdAndUpdate(req.params.id, formUpdated);
