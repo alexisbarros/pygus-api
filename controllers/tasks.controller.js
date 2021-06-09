@@ -36,6 +36,20 @@ const storage_audio = multer.diskStorage({
 exports.uploadAudio = multer({ storage: storage_audio }).array('audios');
 
 /**
+ * Method to save audio in server
+ */
+const storage_complete_word_audio = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, './public/task_complete_word_audio');
+    },
+
+    filename: function (req, file, cb) {
+        cb(null, file.originalname);
+    }
+});
+exports.uploadCompleteWordAudio = multer({ storage: storage_complete_word_audio }).single('audio');
+
+/**
  * Register task in db.
  * @param {*} req 
  * @param {*} res 
@@ -61,7 +75,8 @@ exports.create = async (req, res) => {
             name: req.body.name,
             image: image,
             imageType: req.file.mimetype,
-            syllables: JSON.parse(req.body.syllables)
+            syllables: JSON.parse(req.body.syllables),
+            phoneme: req.body.phoneme,
         });
 
         // Disconnect to database
@@ -75,6 +90,7 @@ exports.create = async (req, res) => {
             image: task.image,
             imageType: task.imageType,
             syllables: task.syllables,
+            phoneme: task.phoneme,
             // audios: task.audios
         };
 
@@ -130,7 +146,9 @@ exports.readOne = async (req, res) => {
             image: task.image,
             imageType: task.imageType,
             syllables: task.syllables,
-            audios: task.audios
+            audios: task.audios,
+            completeWordAudio: task.completeWordAudio,
+            phoneme: task.phoneme,
         };
 
         // Disconnect to database
@@ -190,6 +208,7 @@ exports.readAll = async (req, res) => {
                 // image: task.image,
                 imageType: task.imageType,
                 syllables: task.syllables,
+                phoneme: task.phoneme,
             };
         });
 
@@ -244,7 +263,8 @@ exports.update = async (req, res) => {
             }
             formUpdated['image'] = image;
         }
-        formUpdated['syllables'] = JSON.parse(formUpdated.syllables)
+        formUpdated['syllables'] = JSON.parse(formUpdated.syllables);
+        formUpdated['phoneme'] = JSON.parse(formUpdated.phoneme);
 
         // Update task data
         let task = await Task.findByIdAndUpdate(req.params.id, formUpdated);
@@ -260,7 +280,9 @@ exports.update = async (req, res) => {
             image: task.imagem,
             imageType: task.imageType,
             syllables: task.syllables,
-            audios: task.audios
+            audios: task.audios,
+            completeWordAudio: task.completeWordAudio,
+            phoneme: task.phoneme,
         };
 
         console.info('Task updated successfuly');
@@ -330,7 +352,77 @@ exports.updateAudio = async (req, res) => {
             image: task.imagem,
             imageType: task.imageType,
             syllables: task.syllables,
-            audios: task.audios
+            audios: task.audios,
+            completeWordAudio: task.completeWordAudio,
+            phoneme: task.phoneme,
+        };
+
+        console.info('Task updated successfuly');
+        res.send({
+            data: taskToFront,
+            message: 'Task updated successfuly',
+            code: 200
+        });
+
+    } catch (err) {
+
+        // Disconnect to database
+        await mongoose.disconnect();
+
+        console.error(err.message);
+        res.send({
+            data: [],
+            message: err.message,
+            code: 400
+        });
+
+    }
+
+};
+
+/**
+ * Update a task.
+ * @param {*} req 
+ * @param {*} res 
+ */
+exports.updateCompleteAudio = async (req, res) => {
+
+    try {
+
+        // Connect to database
+        await mongoose.connect(process.env.DB_CONNECTION_STRING, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true
+        });
+
+        let formUpdated = { ...req.body };
+
+        // Get audios
+        if (req.file) {
+            let audio = {
+                data: fs.readFileSync(req.file.path),
+                type: req.file.mimetype
+            }
+            formUpdated['completeWordAudio'] = audio;
+        }
+
+        // Update task data
+        let task = await Task.findByIdAndUpdate(req.params.id, formUpdated);
+
+        // Disconnect to database
+        await mongoose.disconnect();
+
+        // Create task data to return
+        let taskToFront = {
+            _id: task._id,
+            _createdAt: task._createdAt,
+            name: task.name,
+            image: task.imagem,
+            imageType: task.imageType,
+            syllables: task.syllables,
+            audios: task.audios,
+            completeWordAudio: task.completeWordAudio,
+            phoneme: task.phoneme,
         };
 
         console.info('Task updated successfuly');

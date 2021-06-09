@@ -44,6 +44,16 @@ const TaskSchema = new Schema({
         data: Buffer,
         contentType: Array,
     },
+    
+    completeWordAudio: {
+        data: Buffer,
+        contentType: String,
+    },
+
+    phoneme: {
+        type: String,
+        required: false,
+    },
 
     _createdAt: {
         type: Date,
