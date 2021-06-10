@@ -193,7 +193,7 @@ exports.readAll = async (req, res) => {
         });
 
         // Get all tasks
-        let tasks = await Task.find({}).select("-audios -image");
+        let tasks = await Task.find({}).select("-audios -image -completeWordAudio");
 
         // Filter task tha wasnt removed
         let tasksToFront = tasks.filter(task => !task._deletedAt);
