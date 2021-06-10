@@ -40,7 +40,7 @@ exports.uploadAudio = multer({ storage: storage_audio }).array('audios');
  */
 const storage_complete_word_audio = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, './public/task_complete_word_audio');
+        cb(null, './public/task_audios');
     },
 
     filename: function (req, file, cb) {
