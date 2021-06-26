@@ -464,7 +464,7 @@ exports.delete = async (req, res) => {
         });
 
         // Delete task by id
-        await Task.findByIdAndUpdate(req.params.id, { _deletedAt: Date.now() });
+        await Task.findByIdAndDelete(req.params.id);
 
         // Disconnect to database
         await mongoose.disconnect();
