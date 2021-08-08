@@ -57,7 +57,7 @@ exports.uploadCompleteWordAudio = multer({ storage: storage_complete_word_audio 
 exports.create = async (req, res) => {
 
     try {
-
+        console.log(req.body);
         // Connect to database
         await mongoose.connect(process.env.DB_CONNECTION_STRING, {
             useNewUrlParser: true,
@@ -65,16 +65,16 @@ exports.create = async (req, res) => {
         });
 
         // Create image buffer to put in mongod
-        let image = {
-            data: fs.readFileSync(req.file.path),
-            type: req.file.mimetype
-        }
+        // let image = {
+        //     data: fs.readFileSync(req.file.path),
+        //     type: req.file.mimetype
+        // }
 
         // Create task in database
         let task = await Task.create({
             name: req.body.name,
-            image: image,
-            imageType: req.file.mimetype,
+            // image: image,
+            // imageType: req.file.mimetype,
             syllables: JSON.parse(req.body.syllables),
             phoneme: req.body.phoneme,
         });
@@ -87,8 +87,8 @@ exports.create = async (req, res) => {
             _id: task._id,
             _createdAt: task._createdAt,
             name: task.name,
-            image: task.image,
-            imageType: task.imageType,
+            // image: task.image,
+            // imageType: task.imageType,
             syllables: task.syllables,
             phoneme: task.phoneme,
             // audios: task.audios
@@ -133,17 +133,19 @@ exports.readOne = async (req, res) => {
         });
 
         // Get task by id
-        let task = await Task.findById(req.params.id);
+        let task = await Task.findById(req.params.id).select("-image");;
 
         // Check if task was removed
         if (task._deletedAt) throw { message: 'Task removed' };
+
+        let image = `https://firebasestorage.googleapis.com/v0/b/pygus-backoffice.appspot.com/o/images%2F${task.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase()}.png?alt=media`
 
         // Create task data to return
         let taskToFront = {
             _id: task._id,
             _createdAt: task._createdAt,
             name: task.name,
-            image: task.image,
+            image: image,
             imageType: task.imageType,
             syllables: task.syllables,
             audios: task.audios,
@@ -198,14 +200,16 @@ exports.readAll = async (req, res) => {
         // Filter task tha wasnt removed
         let tasksToFront = tasks.filter(task => !task._deletedAt);
 
+
         // Create task data to return
         tasksToFront = tasksToFront.map(task => {
+            let image = `https://firebasestorage.googleapis.com/v0/b/pygus-backoffice.appspot.com/o/images%2F${task.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase()}.png?alt=media`
             return {
                 _id: task._id,
                 _createdAt: task._createdAt,
                 name: task.name,
                 // audios: task.audios,
-                // image: task.image,
+                image: image,
                 imageType: task.imageType,
                 syllables: task.syllables,
                 phoneme: task.phoneme,
