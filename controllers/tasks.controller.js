@@ -195,33 +195,35 @@ exports.readAll = async (req, res) => {
         });
 
         // Get all tasks
-        let tasks = await Task.find({}).select("-audios -image -completeWordAudio");
+        let tasks = await Task.find({
+            _deletedAt: null,
+        }).select("-audios -completeWordAudio");
 
-        // Filter task tha wasnt removed
-        let tasksToFront = tasks.filter(task => !task._deletedAt);
+        // Get all phonemes
+        let allPhonemes = tasks
+            .map((el) => {
+                return el['phoneme'];
+            });
+        let phonemes = [...new Set(allPhonemes)];
 
-
-        // Create task data to return
-        tasksToFront = tasksToFront.map(task => {
-            let image = `https://firebasestorage.googleapis.com/v0/b/pygus-backoffice.appspot.com/o/images%2F${task.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase()}.png?alt=media`
-            return {
-                _id: task._id,
-                _createdAt: task._createdAt,
-                name: task.name,
-                // audios: task.audios,
-                image: image,
-                imageType: task.imageType,
-                syllables: task.syllables,
-                phoneme: task.phoneme,
+        // Create list of all tasks by phoneme
+        let tasksByPhoneme = [];
+        for (let index = 0; index < phonemes.length; index++) {
+            let localTasks = tasks.filter((task) => task['phoneme'] === phonemes[index]);
+            let elementToAdd = {
+                'phoneme': phonemes[index],
+                'tasks': localTasks,
             };
-        });
+            tasksByPhoneme.push(elementToAdd);
+        };
 
         // Disconnect to database
         await mongoose.disconnect();
 
         console.info('Tasks returned successfully');
         res.send({
-            data: tasksToFront,
+            data: tasksByPhoneme,
+            // data: tasksToFront,
             message: 'Tasks returned successfully',
             code: 200
         });
