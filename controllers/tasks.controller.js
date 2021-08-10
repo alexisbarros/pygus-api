@@ -245,6 +245,53 @@ exports.readAll = async (req, res) => {
 };
 
 /**
+ * Get all tasks from backoffice.
+ * @param {*} req 
+ * @param {*} res 
+ */
+exports.readAllFromBackOffice = async (req, res) => {
+
+    try {
+
+        // Connect to database
+        await mongoose.connect(process.env.DB_CONNECTION_STRING, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true
+        });
+
+        // Get all tasks
+        let tasks = await Task.find({
+            _deletedAt: null,
+        }).select("-audios -completeWordAudio");
+
+        // Disconnect to database
+        await mongoose.disconnect();
+
+        console.info('Tasks returned successfully');
+        res.send({
+            data: tasks,
+            // data: tasksToFront,
+            message: 'Tasks returned successfully',
+            code: 200
+        });
+
+    } catch (err) {
+
+        // Disconnect to database
+        await mongoose.disconnect();
+
+        console.error(err.message);
+        res.send({
+            data: [],
+            message: err.message,
+            code: 400
+        });
+
+    }
+
+};
+
+/**
  * Update a task.
  * @param {*} req 
  * @param {*} res 
