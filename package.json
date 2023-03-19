@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "docker:build": "docker build -t pygus-api .",
-    "docker:run": "docker run -p 3000:3000 -d pygus-api"
+    "docker:run": "docker run -p 3000:3000 -d pygus-api",
+    "docker:compose": "docker compose up -d"
   },
   "keywords": [
     "API",
