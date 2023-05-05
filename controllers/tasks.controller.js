@@ -7,19 +7,19 @@ const multer = require('multer');
 const Task = require('../models/tasks.model');
 
 /**
- * Method to save image in server
+ * Method to save complete audio in server
  */
 const storage = multer.diskStorage({
 
     destination: function (req, file, cb) {
-        cb(null, './public/tasks_images');
+        cb(null, './public/tasks_complete_audios');
     },
 
     filename: function (req, file, cb) {
         cb(null, file.originalname);
     }
 });
-exports.uploadImg = multer({ storage: storage }).single('image');
+exports.uploadCompleteWordAudio = multer({ storage: storage }).single('completeAudio');
 
 /**
  * Method to audios image in server
@@ -36,18 +36,18 @@ const storage_audio = multer.diskStorage({
 exports.uploadAudio = multer({ storage: storage_audio }).array('audios');
 
 /**
- * Method to save audio in server
+ * Method to save image in server
  */
-const storage_complete_word_audio = multer.diskStorage({
+const storage_image = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, './public/task_audios');
+        cb(null, './public/tasks_images');
     },
 
     filename: function (req, file, cb) {
         cb(null, file.originalname);
     }
 });
-exports.uploadCompleteWordAudio = multer({ storage: storage_complete_word_audio }).single('audio');
+exports.uploadImg = multer({ storage: storage_image }).single('image');
 
 /**
  * Register task in db.
@@ -57,7 +57,6 @@ exports.uploadCompleteWordAudio = multer({ storage: storage_complete_word_audio 
 exports.create = async (req, res) => {
 
     try {
-        console.log(req.body);
         // Connect to database
         await mongoose.connect(process.env.DB_CONNECTION_STRING, {
             useNewUrlParser: true,
@@ -71,6 +70,7 @@ exports.create = async (req, res) => {
         // }
 
         // Create task in database
+        req.body = {...req.body};
         let task = await Task.create({
             name: req.body.name,
             // image: image,
@@ -139,7 +139,8 @@ exports.readOne = async (req, res) => {
         if (task._deletedAt) throw { message: 'Task removed' };
 
         // let image = `https://firebasestorage.googleapis.com/v0/b/pygus-backoffice.appspot.com/o/images%2F${task.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase()}.png?alt=media`
-        let image = `http://191.101.18.67:3000/public/tasks_images/${task.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase()}.png`;
+        // let image = `http://191.101.18.67:3000/public/tasks_images/${task.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase()}.png`;
+        let image = `http://localhost:3000/public/tasks_images/${task.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase()}.png`;
 
         // Create task data to return
         let taskToFront = {
@@ -308,7 +309,6 @@ exports.update = async (req, res) => {
         });
 
         let formUpdated = { ...req.body };
-
         // Create image buffer to put in mongod
         // if (req.file) {
         //     let image = {
@@ -317,7 +317,7 @@ exports.update = async (req, res) => {
         //     }
         //     formUpdated['image'] = image;
         // }
-        formUpdated['syllables'] = JSON.parse(formUpdated.syllables);
+        formUpdated['syllables'] = JSON.parse(formUpdated.syllables[0]);
         formUpdated['phoneme'] = formUpdated.phoneme;
 
         // Update task data
