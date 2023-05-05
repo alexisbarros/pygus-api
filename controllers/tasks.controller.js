@@ -75,7 +75,7 @@ exports.create = async (req, res) => {
             name: req.body.name,
             // image: image,
             // imageType: req.file.mimetype,
-            syllables: JSON.parse(req.body.syllables),
+            syllables: JSON.parse(req.body.syllables[0]),
             phoneme: req.body.phoneme,
         });
 
