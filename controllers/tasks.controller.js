@@ -124,20 +124,16 @@ exports.readOne = async (req, res) => {
         });
 
         // Get task by id
-        let task = await Task.findById(req.params.id).select("-image");;
+        let task = await Task.findById(req.params.id).select("-image -audios -completeWordAudio");;
 
         // Check if task was removed
         if (task._deletedAt) throw { message: 'Task removed' };
-
-        // let image = `https://firebasestorage.googleapis.com/v0/b/pygus-backoffice.appspot.com/o/images%2F${task.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase()}.png?alt=media`
-        // let image = `http://191.101.18.67:3000/public/tasks_images/${task.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase()}.png`;
 
         // Create task data to return
         let taskToFront = {
             _id: task._id,
             _createdAt: task._createdAt,
             name: task.name,
-            imageType: task.imageType,
             syllables: task.syllables,
             phoneme: task.phoneme,
         };
