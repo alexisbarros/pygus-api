@@ -1,13 +1,25 @@
-// Modules
 const mongoose = require('mongoose');
 const fs = require('fs');
 const multer = require('multer');
 
-// Model
 const Task = require('../models/tasks.model');
 
 /**
- * Method to save complete audio in server
+ * Save image in server middleware
+ */
+const storage_image = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, './public/tasks_images');
+    },
+
+    filename: function (req, file, cb) {
+        cb(null, file.originalname);
+    }
+});
+exports.uploadImg = multer({ storage: storage_image }).single('image');
+
+/**
+ * Save complete audio in server middleware
  */
 const storage = multer.diskStorage({
 
@@ -22,32 +34,23 @@ const storage = multer.diskStorage({
 exports.uploadCompleteWordAudio = multer({ storage: storage }).single('completeAudio');
 
 /**
- * Method to audios image in server
+ * Save syllables audios in server middleware
  */
 const storage_audio = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, './public/tasks_audios');
+        const taskFolder = file.originalname.split('__')[0];
+        const fullPath = `./public/tasks_audios/${taskFolder}`;
+        if(!fs.existsSync(fullPath)){
+            fs.mkdirSync(`./public/tasks_audios/${taskFolder}`);
+        }
+        cb(null, `./public/tasks_audios/${taskFolder}`);
     },
 
     filename: function (req, file, cb) {
-        cb(null, file.originalname);
+        cb(null, file.originalname.split('__')[1]);
     }
 });
 exports.uploadAudio = multer({ storage: storage_audio }).array('audios');
-
-/**
- * Method to save image in server
- */
-const storage_image = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, './public/tasks_images');
-    },
-
-    filename: function (req, file, cb) {
-        cb(null, file.originalname);
-    }
-});
-exports.uploadImg = multer({ storage: storage_image }).single('image');
 
 /**
  * Register task in db.
@@ -63,19 +66,10 @@ exports.create = async (req, res) => {
             useUnifiedTopology: true
         });
 
-        // Create image buffer to put in mongod
-        // let image = {
-        //     data: fs.readFileSync(req.file.path),
-        //     type: req.file.mimetype
-        // }
-
         // Create task in database
-        req.body = {...req.body};
         let task = await Task.create({
             name: req.body.name,
-            // image: image,
-            // imageType: req.file.mimetype,
-            syllables: JSON.parse(req.body.syllables[0]),
+            syllables: req.body.syllables,
             phoneme: req.body.phoneme,
         });
 
@@ -87,11 +81,8 @@ exports.create = async (req, res) => {
             _id: task._id,
             _createdAt: task._createdAt,
             name: task.name,
-            // image: task.image,
-            // imageType: task.imageType,
             syllables: task.syllables,
             phoneme: task.phoneme,
-            // audios: task.audios
         };
 
         console.info('Task created successfuly');
@@ -139,18 +130,15 @@ exports.readOne = async (req, res) => {
         if (task._deletedAt) throw { message: 'Task removed' };
 
         // let image = `https://firebasestorage.googleapis.com/v0/b/pygus-backoffice.appspot.com/o/images%2F${task.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase()}.png?alt=media`
-        let image = `http://191.101.18.67:3000/public/tasks_images/${task.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase()}.png`;
+        // let image = `http://191.101.18.67:3000/public/tasks_images/${task.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase()}.png`;
 
         // Create task data to return
         let taskToFront = {
             _id: task._id,
             _createdAt: task._createdAt,
             name: task.name,
-            image: image,
             imageType: task.imageType,
             syllables: task.syllables,
-            audios: task.audios,
-            completeWordAudio: task.completeWordAudio,
             phoneme: task.phoneme,
         };
 
@@ -271,7 +259,6 @@ exports.readAllFromBackOffice = async (req, res) => {
         console.info('Tasks returned successfully');
         res.send({
             data: tasks,
-            // data: tasksToFront,
             message: 'Tasks returned successfully',
             code: 200
         });
@@ -307,180 +294,15 @@ exports.update = async (req, res) => {
             useUnifiedTopology: true
         });
 
-        let formUpdated = { ...req.body };
-        // Create image buffer to put in mongod
-        // if (req.file) {
-        //     let image = {
-        //         data: fs.readFileSync(req.file.path),
-        //         type: req.file.mimetype
-        //     }
-        //     formUpdated['image'] = image;
-        // }
-        formUpdated['syllables'] = JSON.parse(formUpdated.syllables[0]);
-        formUpdated['phoneme'] = formUpdated.phoneme;
-
         // Update task data
-        let task = await Task.findByIdAndUpdate(req.params.id, formUpdated);
+        const data = await Task.findByIdAndUpdate(req.params.id, req.body, { new: true });
 
         // Disconnect to database
         await mongoose.disconnect();
-
-        // Create task data to return
-        let taskToFront = {
-            _id: task._id,
-            _createdAt: task._createdAt,
-            name: task.name,
-            image: task.imagem,
-            imageType: task.imageType,
-            syllables: task.syllables,
-            audios: task.audios,
-            completeWordAudio: task.completeWordAudio,
-            phoneme: task.phoneme,
-        };
 
         console.info('Task updated successfuly');
         res.send({
-            data: taskToFront,
-            message: 'Task updated successfuly',
-            code: 200
-        });
-
-    } catch (err) {
-
-        // Disconnect to database
-        await mongoose.disconnect();
-
-        console.error(err.message);
-        res.send({
-            data: [],
-            message: err.message,
-            code: 400
-        });
-
-    }
-
-};
-
-/**
- * Update a task.
- * @param {*} req 
- * @param {*} res 
- */
-exports.updateAudio = async (req, res) => {
-
-    try {
-
-        // Connect to database
-        await mongoose.connect(process.env.DB_CONNECTION_STRING, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true
-        });
-
-        let formUpdated = { ...req.body };
-
-        // Get audios
-        if (req.files) {
-            // Create audios buffer to put in mongod
-            let audios = [];
-            for (audio of req.files) {
-                audios.push({
-                    data: fs.readFileSync(audio.path),
-                    type: audio.mimetype
-                });
-            };
-            formUpdated['audios'] = audios;
-        }
-
-        // Update task data
-        let task = await Task.findByIdAndUpdate(req.params.id, formUpdated);
-
-        // Disconnect to database
-        await mongoose.disconnect();
-
-        // Create task data to return
-        let taskToFront = {
-            _id: task._id,
-            _createdAt: task._createdAt,
-            name: task.name,
-            image: task.imagem,
-            imageType: task.imageType,
-            syllables: task.syllables,
-            audios: task.audios,
-            completeWordAudio: task.completeWordAudio,
-            phoneme: task.phoneme,
-        };
-
-        console.info('Task updated successfuly');
-        res.send({
-            data: taskToFront,
-            message: 'Task updated successfuly',
-            code: 200
-        });
-
-    } catch (err) {
-
-        // Disconnect to database
-        await mongoose.disconnect();
-
-        console.error(err.message);
-        res.send({
-            data: [],
-            message: err.message,
-            code: 400
-        });
-
-    }
-
-};
-
-/**
- * Update a task.
- * @param {*} req 
- * @param {*} res 
- */
-exports.updateCompleteAudio = async (req, res) => {
-
-    try {
-
-        // Connect to database
-        await mongoose.connect(process.env.DB_CONNECTION_STRING, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true
-        });
-
-        let formUpdated = { ...req.body };
-
-        // Get audios
-        if (req.file) {
-            let audio = {
-                data: fs.readFileSync(req.file.path),
-                type: req.file.mimetype
-            }
-            formUpdated['completeWordAudio'] = audio;
-        }
-
-        // Update task data
-        let task = await Task.findByIdAndUpdate(req.params.id, formUpdated);
-
-        // Disconnect to database
-        await mongoose.disconnect();
-
-        // Create task data to return
-        let taskToFront = {
-            _id: task._id,
-            _createdAt: task._createdAt,
-            name: task.name,
-            image: task.imagem,
-            imageType: task.imageType,
-            syllables: task.syllables,
-            audios: task.audios,
-            completeWordAudio: task.completeWordAudio,
-            phoneme: task.phoneme,
-        };
-
-        console.info('Task updated successfuly');
-        res.send({
-            data: taskToFront,
+            data: data,
             message: 'Task updated successfuly',
             code: 200
         });
@@ -516,7 +338,6 @@ exports.delete = async (req, res) => {
             useUnifiedTopology: true
         });
 
-        // Delete task by id
         await Task.findByIdAndDelete(req.params.id);
 
         // Disconnect to database

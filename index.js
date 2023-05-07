@@ -35,6 +35,7 @@ app.use('/tasks', authMiddleware, tasksRoutes);
 // Statics routes
 app.use('/public/tasks_images', express.static(__dirname + '/public/tasks_images'));
 app.use('/public/tasks_audios', express.static(__dirname + '/public/tasks_audios'));
+app.use('/public/tasks_complete_audios', express.static(__dirname + '/public/tasks_complete_audios'));
 
 // Run server
 app.listen(port, () => {
