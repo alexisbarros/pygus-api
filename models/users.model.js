@@ -9,6 +9,10 @@ const Schema = mongoose.Schema;
 // Schema
 let UserSchema = new Schema({
 
+    name: {
+        type: String,
+    },
+
     email: {
         type: String,
         required: true,
@@ -18,6 +22,10 @@ let UserSchema = new Schema({
     password: {
         type: String,
         required: true
+    },
+
+    birthday: {
+        type: String,
     },
 
     isAdmin: {

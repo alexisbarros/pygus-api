@@ -21,9 +21,11 @@ exports.create = async (req, res) => {
         
         // Create user in database
         let user = await User.create({
+            name: req.body.name,
             email: req.body.email,
             password: req.body.password,
-            isAdmin: req.body.isAdmin || false
+            isAdmin: req.body.isAdmin || false,
+            birthday: req.body.birthday
         });
     
         // Disconnect to database
@@ -33,7 +35,9 @@ exports.create = async (req, res) => {
         let userToFront = {
             _id: user._id,
             email: user.email,
-            isAdmin: user.isAdmin
+            name: user.name,
+            isAdmin: user.isAdmin,
+            birthday: user.birthday,
         };
         
         console.info('User created successfuly');
@@ -83,8 +87,10 @@ exports.readOne = async (req, res) => {
         // Create user data to return
         let userToFront = {
             _id: user._id,
+            name: user.name,
             email: user.email,
-            isAdmin: user.isAdmin
+            isAdmin: user.isAdmin,
+            birthday: user.birthday,
         };
         
         // Disconnect to database
@@ -138,8 +144,10 @@ exports.readAll = async (req, res) => {
         usersToFront = usersToFront.map(user => {
             return {
                 _id: user._id,
+                name: user.name,
                 email: user.email,
-                isAdmin: user.isAdmin
+                isAdmin: user.isAdmin,
+                birthday: user.birthday,
             };
         });
         
@@ -193,8 +201,10 @@ exports.update = async (req, res) => {
         // Create user data to return
         let userToFront = {
             _id: user._id,
+            name: user.name,
             email: user.email,
-            isAdmin: user.isAdmin
+            isAdmin: user.isAdmin,
+            birthday: user.birthday
         };
         
         console.info('User updated successfuly');

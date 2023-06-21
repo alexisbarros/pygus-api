@@ -30,7 +30,11 @@ exports.register = async (req, res) => {
         if(user.code === 400) throw { message: user.message }
 
         // Generate token
-        let token = jwt.sign({ id: user.data._id, email: user.data.email }, process.env.JWT_SECRET);
+        let token = jwt.sign({ 
+            id: user.data._id, 
+            email: user.data.email,
+            name: user.data.name,
+        }, process.env.JWT_SECRET);
         
         // Create user to send to front
         let usersToFront = {
@@ -84,7 +88,11 @@ exports.login = async (req, res) => {
         if(isChecked){
 
             // Generate token
-            let token = jwt.sign({ id: user._id, email: user.email }, process.env.JWT_SECRET);
+            let token = jwt.sign({ 
+                id: user._id, 
+                email: user.email,
+                name: user.name,
+            }, process.env.JWT_SECRET);
 
             // Create user data to return
             let userToFront = {
