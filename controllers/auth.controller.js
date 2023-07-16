@@ -1,6 +1,5 @@
 // Modules
 const jwt = require('jsonwebtoken');
-const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 
 // Controllers
@@ -73,12 +72,6 @@ exports.login = async (req, res) => {
 
     try {
 
-        // Connect to database
-        await mongoose.connect(process.env.DB_CONNECTION_STRING, { 
-            useNewUrlParser: true,
-            useUnifiedTopology: true
-        });
-
         // Search user
         let user = await User.findOne({ email: req.body.email });
         if(!user) throw { message: 'Usuário não encontrado' };
@@ -101,9 +94,6 @@ exports.login = async (req, res) => {
                 isAdmin: user.isAdmin,
                 token: token
             };
-
-            // Disconnect to database
-            await mongoose.disconnect();
             
             console.info('Usuário logado com sucesso');
             res.send({
@@ -119,9 +109,6 @@ exports.login = async (req, res) => {
         }
 
     } catch(err) {
-
-        // Disconnect to database
-        await mongoose.disconnect();
 
         console.error(err.message);
         res.send({
@@ -143,12 +130,6 @@ exports.loginAdmin = async (req, res) => {
 
     try {
 
-        // Connect to database
-        await mongoose.connect(process.env.DB_CONNECTION_STRING, { 
-            useNewUrlParser: true,
-            useUnifiedTopology: true
-        });
-
         // Search user and check if user is admin
         let user = await User.findOne({ email: req.body.email });
         if(!user) throw { message: 'Usuário não encontrado' };
@@ -168,9 +149,6 @@ exports.loginAdmin = async (req, res) => {
                 isAdmin: user.isAdmin,
                 token: token
             };
-
-            // Disconnect to database
-            await mongoose.disconnect();
             
             console.info('Usuário logado com sucesso');
             res.send({
@@ -186,9 +164,6 @@ exports.loginAdmin = async (req, res) => {
         }
 
     } catch(err) {
-
-        // Disconnect to database
-        await mongoose.disconnect();
 
         console.error(err.message);
         res.send({
