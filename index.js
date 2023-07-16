@@ -24,8 +24,8 @@ app.use(bodyParser.json());
 
 app.use('/users', usersRoutes);
 app.use('/auth', authRoutes);
-// app.use('/tasks', authMiddleware, tasksRoutes);
-app.use('/tasks', tasksRoutes);
+app.use('/tasks', authMiddleware, tasksRoutes);
+
 app.use('/public/tasks_images', express.static(__dirname + '/public/tasks_images'));
 app.use('/public/tasks_audios', express.static(__dirname + '/public/tasks_audios'));
 app.use('/public/tasks_complete_audios', express.static(__dirname + '/public/tasks_complete_audios'));
