@@ -2,7 +2,9 @@ const mongoose = require('mongoose');
 const fs = require('fs');
 const multer = require('multer');
 
-const Task = require('../models/tasks.model');
+const TaskModel = require('../models/tasks.model');
+const Task = require('../domain/entities/task.model');
+const { getFileUrl } = require('../services/cloud-storage.service');
 
 /**
  * Save image in server middleware
@@ -60,21 +62,13 @@ exports.uploadAudio = multer({ storage: storage_audio }).array('audios');
 exports.create = async (req, res) => {
 
     try {
-        // Connect to database
-        await mongoose.connect(process.env.DB_CONNECTION_STRING, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true
-        });
 
         // Create task in database
-        let task = await Task.create({
+        let task = await TaskModel.create({
             name: req.body.name,
             syllables: req.body.syllables,
             phoneme: req.body.phoneme,
         });
-
-        // Disconnect to database
-        await mongoose.disconnect();
 
         // Create task data to return
         let taskToFront = {
@@ -93,9 +87,6 @@ exports.create = async (req, res) => {
         });
 
     } catch (err) {
-
-        // Disconnect to database
-        await mongoose.disconnect();
 
         console.error(err.message);
         res.send({
@@ -117,41 +108,40 @@ exports.readOne = async (req, res) => {
 
     try {
 
-        // Connect to database
-        await mongoose.connect(process.env.DB_CONNECTION_STRING, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true
-        });
+        const data = await TaskModel
+            .findById(req.params.id);
+        
+        let task = new Task(data);
+        
+        task.imgUrl = await getFileUrl(
+            'tasks_images', 
+            `${task.name.toUpperCase()}.png`,
+        );
 
-        // Get task by id
-        let task = await Task.findById(req.params.id).select("-image -audios -completeWordAudio");;
+        task.audioUrl = await getFileUrl(
+            'tasks_complete_audios', 
+            `${task.name.toUpperCase()}.mp3`,
+        );
 
-        // Check if task was removed
-        if (task._deletedAt) throw { message: 'Task removed' };
+        await Promise.all(
+            task.syllables.map(async (syllable) => {
+                syllable.audioUrl = await getFileUrl(
+                    `tasks_audios/${task.name.toUpperCase()}`, 
+                    `${syllable.syllable.toUpperCase()}.mp3`
+                );
+                return syllable;
 
-        // Create task data to return
-        let taskToFront = {
-            _id: task._id,
-            _createdAt: task._createdAt,
-            name: task.name,
-            syllables: task.syllables,
-            phoneme: task.phoneme,
-        };
-
-        // Disconnect to database
-        await mongoose.disconnect();
+            })
+        );
 
         console.info('Task returned successfully');
         res.send({
-            data: taskToFront,
+            data: new Task(task),
             message: 'Task returned successfully',
             code: 200
         });
 
     } catch (err) {
-
-        // Disconnect to database
-        await mongoose.disconnect();
 
         console.error(err.message);
         res.send({
@@ -173,50 +163,36 @@ exports.readAll = async (req, res) => {
 
     try {
 
-        // Connect to database
-        await mongoose.connect(process.env.DB_CONNECTION_STRING, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true
-        });
+        const tasks = (await TaskModel
+            .find())
+            .map(data => new Task(data));
 
-        // Get all tasks
-        let tasks = await Task.find({
-            _deletedAt: null,
-        }).select("-audios -completeWordAudio");
-
-        // Get all phonemes
-        let allPhonemes = tasks
-            .map((el) => {
-                return el['phoneme'];
-            });
-        let phonemes = [...new Set(allPhonemes)];
+        const phonemes = [
+            ...new Set(
+                tasks.map((el) => el['phoneme'])
+            ),
+        ]
 
         // Create list of all tasks by phoneme
         let tasksByPhoneme = [];
-        for (let index = 0; index < phonemes.length; index++) {
-            let localTasks = tasks.filter((task) => task['phoneme'] === phonemes[index]);
-            let elementToAdd = {
-                'phoneme': phonemes[index],
-                'tasks': localTasks,
-            };
-            tasksByPhoneme.push(elementToAdd);
-        };
+        for (const phoneme of phonemes) {
+            const tasksBySinglePhoneme = tasks
+                .filter((task) => task.phoneme === phoneme);
 
-        // Disconnect to database
-        await mongoose.disconnect();
+            tasksByPhoneme.push({
+                'phoneme': phoneme,
+                'tasks': tasksBySinglePhoneme,
+            });
+        }
 
         console.info('Tasks returned successfully');
         res.send({
             data: tasksByPhoneme,
-            // data: tasksToFront,
             message: 'Tasks returned successfully',
             code: 200
         });
 
     } catch (err) {
-
-        // Disconnect to database
-        await mongoose.disconnect();
 
         console.error(err.message);
         res.send({
@@ -238,19 +214,10 @@ exports.readAllFromBackOffice = async (req, res) => {
 
     try {
 
-        // Connect to database
-        await mongoose.connect(process.env.DB_CONNECTION_STRING, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true
-        });
-
         // Get all tasks
-        let tasks = await Task.find({
+        let tasks = await TaskModel.find({
             _deletedAt: null,
         }).select("-audios -completeWordAudio");
-
-        // Disconnect to database
-        await mongoose.disconnect();
 
         console.info('Tasks returned successfully');
         res.send({
@@ -284,17 +251,8 @@ exports.update = async (req, res) => {
 
     try {
 
-        // Connect to database
-        await mongoose.connect(process.env.DB_CONNECTION_STRING, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true
-        });
-
         // Update task data
-        const data = await Task.findByIdAndUpdate(req.params.id, req.body, { new: true });
-
-        // Disconnect to database
-        await mongoose.disconnect();
+        const data = await TaskModel.findByIdAndUpdate(req.params.id, req.body, { new: true });
 
         console.info('Task updated successfuly');
         res.send({
@@ -304,9 +262,6 @@ exports.update = async (req, res) => {
         });
 
     } catch (err) {
-
-        // Disconnect to database
-        await mongoose.disconnect();
 
         console.error(err.message);
         res.send({
@@ -328,16 +283,7 @@ exports.delete = async (req, res) => {
 
     try {
 
-        // Connect to database
-        await mongoose.connect(process.env.DB_CONNECTION_STRING, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true
-        });
-
-        await Task.findByIdAndDelete(req.params.id);
-
-        // Disconnect to database
-        await mongoose.disconnect();
+        await TaskModel.findByIdAndDelete(req.params.id);
 
         console.info('Task deleted successfuly');
         res.send({
@@ -347,9 +293,6 @@ exports.delete = async (req, res) => {
         });
 
     } catch (err) {
-
-        // Disconnect to database
-        await mongoose.disconnect();
 
         console.error(err.message);
         res.send({
