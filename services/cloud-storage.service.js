@@ -1,9 +1,11 @@
 const { Storage } = require('@google-cloud/storage');
 
-const storage = new Storage({
-    keyFilename: process.env.GOOGLE_CLOUD_STORAGE_FILE_KEY,
-    projectId: 'pygusapp',
-});
+const storageConfig = {
+  keyFilename: process.env.GOOGLE_CLOUD_STORAGE_FILE_KEY,
+  projectId: 'pygusapp',
+};
+
+const storage = new Storage(/* storageConfig */);
 const bucketName = 'pygus-storage';
 
 exports.getFileUrl = async (directoryPath, fileName) => {
