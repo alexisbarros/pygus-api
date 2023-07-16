@@ -7,7 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "docker:build": "docker build -t pygus-api .",
     "docker:run": "docker run -p 3000:3000 -d pygus-api",
-    "docker:compose": "docker compose up -d"
+    "docker:compose": "docker compose up -d",
+    "start": "node index.js"
   },
   "keywords": [
     "API",
@@ -16,6 +17,7 @@
   "author": "Alexis Barros",
   "license": "ISC",
   "dependencies": {
+    "@google-cloud/storage": "^6.12.0",
     "bcrypt": "^5.0.0",
     "body-parser": "^1.19.0",
     "cors": "^2.8.5",

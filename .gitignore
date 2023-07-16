@@ -15,3 +15,5 @@ public/tasks_audios/*
 !public/tasks_audios/tasks_audios
 public/tasks_images/*
 !public/tasks_images/tasks_images
+
+cloud-storage-key.json
