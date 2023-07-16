@@ -5,6 +5,7 @@ const multer = require('multer');
 const TaskModel = require('../models/tasks.model');
 const Task = require('../domain/entities/task.model');
 const { getFileUrl } = require('../services/cloud-storage.service');
+const { standardizeText } =  require('../utils/string.util');
 
 /**
  * Save image in server middleware
@@ -115,19 +116,19 @@ exports.readOne = async (req, res) => {
         
         task.imgUrl = await getFileUrl(
             'tasks_images', 
-            `${task.name.toUpperCase()}.png`,
+            `${standardizeText(task.name)}.png`,
         );
 
         task.audioUrl = await getFileUrl(
             'tasks_complete_audios', 
-            `${task.name.toUpperCase()}.mp3`,
+            `${standardizeText(task.name)}.mp3`,
         );
 
         await Promise.all(
             task.syllables.map(async (syllable) => {
                 syllable.audioUrl = await getFileUrl(
-                    `tasks_audios/${task.name.toUpperCase()}`, 
-                    `${syllable.syllable.toUpperCase()}.mp3`
+                    `tasks_audios/${standardizeText(task.name)}`, 
+                    `${standardizeText(syllable.syllable)}.mp3`
                 );
                 return syllable;
 
